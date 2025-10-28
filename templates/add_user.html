@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Add User</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">User Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_user') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="username" class="form-label">Username *</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                    <div class="form-text">Unique username for login</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="display_name" class="form-label">Display Name *</label>
+                    <input type="text" class="form-control" id="display_name" name="display_name" required>
+                    <div class="form-text">Full name to display in the system</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="form-text">Minimum 6 characters</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="role" class="form-label">Role *</label>
+                    <select class="form-select" id="role" name="role" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Administrator</option>
+                        <option value="staff">Staff Member</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Add User
+                </button>
+                <a href="{{ url_for('users') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
