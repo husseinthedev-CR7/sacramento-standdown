@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ veteran.first_name }} {{ veteran.last_name }} - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-3 mb-3 border-bottom">
+    <h1 class="h2">{{ veteran.first_name }} {{ veteran.last_name }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('veterans') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Veterans
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Veteran Information -->
+    <div class="col-md-6 mb-4">
+        <div class="content-card">
+            <h5 class="card-title mb-3">Veteran Information</h5>
+            <div class="row">
+                <div class="col-6 mb-2"><strong>Service Branch:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.service_branch or 'Not specified' }}</div>
+                
+                <div class="col-6 mb-2"><strong>Phone:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.phone_number or 'Not provided' }}</div>
+                
+                <div class="col-6 mb-2"><strong>Email:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.email or 'Not provided' }}</div>
+                
+                <div class="col-6 mb-2"><strong>Gender:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.gender or 'Not specified' }}</div>
+                
+                <div class="col-6 mb-2"><strong>Date of Birth:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.date_of_birth or 'Not provided' }}</div>
+                
+                <div class="col-6 mb-2"><strong>Housing Status:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.housing_status or 'Not specified' }}</div>
+                
+                {% if veteran.housing_notes %}
+                <div class="col-6 mb-2"><strong>Housing Notes:</strong></div>
+                <div class="col-6 mb-2">{{ veteran.housing_notes }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Equipment -->
+    <div class="col-md-6 mb-4">
+        <div class="content-card">
+            <h5 class="card-title mb-3">Assign Equipment</h5>
+            <form method="POST" action="{{ url_for('assign_equipment', veteran_id=veteran.id) }}">
+                <div class="mb-3">
+                    <label for="inventory_id" class="form-label">Select Item *</label>
+                    <select class="form-select" id="inventory_id" name="inventory_id" required>
+                        <option value="">Choose equipment...</option>
+                        {% for item in inventory_items %}
+                        <option value="{{ item.id }}">{{ item.item_name }} (Available: {{ item.quantity }}) - {{ item.category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity *</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes (Optional)</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Additional notes about this assignment..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-ssd w-100">
+                    <i class="fas fa-tools"></i> Assign Equipment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Equipment Assignments -->
+<div class="content-card">
+    <h5 class="card-title mb-3">Equipment Assignment History</h5>
+    {% if assignments %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Size</th>
+                    <th>Color</th>
+                    <th>Quantity</th>
+                    <th>Assigned By</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                <tr>
+                    <td>{{ assignment.item_name }}</td>
+                    <td>{{ assignment.category or 'N/A' }}</td>
+                    <td>{{ assignment.size or 'N/A' }}</td>
+                    <td>{{ assignment.color or 'N/A' }}</td>
+                    <td>{{ assignment.quantity_assigned }}</td>
+                    <td>{{ assignment.assigned_by_name }}</td>
+                    <td>{{ assignment.assigned_at[:16] }}</td>
+                    <td>{{ assignment.notes or 'No notes' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No equipment assigned to this veteran yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
