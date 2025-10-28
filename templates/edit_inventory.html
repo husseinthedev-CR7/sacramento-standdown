@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Inventory - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-3 mb-3 border-bottom">
+    <h1 class="h2">Edit Inventory Item</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Inventory
+        </a>
+    </div>
+</div>
+
+<div class="content-card">
+    <h5 class="card-title mb-3">Edit Item: {{ item.item_name }}</h5>
+    <form method="POST" action="{{ url_for('edit_inventory', item_id=item.id) }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="item_name" class="form-label">Item Name *</label>
+                <input type="text" class="form-control" id="item_name" name="item_name" value="{{ item.item_name }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Select Category</option>
+                    <option value="Clothing" {% if item.category == 'Clothing' %}selected{% endif %}>Clothing</option>
+                    <option value="Footwear" {% if item.category == 'Footwear' %}selected{% endif %}>Footwear</option>
+                    <option value="Hygiene" {% if item.category == 'Hygiene' %}selected{% endif %}>Hygiene</option>
+                    <option value="Food" {% if item.category == 'Food' %}selected{% endif %}>Food</option>
+                    <option value="Equipment" {% if item.category == 'Equipment' %}selected{% endif %}>Equipment</option>
+                    <option value="Medical" {% if item.category == 'Medical' %}selected{% endif %}>Medical</option>
+                    <option value="Other" {% if item.category == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="size" class="form-label">Size</label>
+                <select class="form-select" id="size" name="size">
+                    <option value="">Select Size</option>
+                    <option value="XS" {% if item.size == 'XS' %}selected{% endif %}>XS</option>
+                    <option value="S" {% if item.size == 'S' %}selected{% endif %}>S</option>
+                    <option value="M" {% if item.size == 'M' %}selected{% endif %}>M</option>
+                    <option value="L" {% if item.size == 'L' %}selected{% endif %}>L</option>
+                    <option value="XL" {% if item.size == 'XL' %}selected{% endif %}>XL</option>
+                    <option value="XXL" {% if item.size == 'XXL' %}selected{% endif %}>XXL</option>
+                    <option value="N/A" {% if item.size == 'N/A' %}selected{% endif %}>Not Applicable</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="color" class="form-label">Color</label>
+                <input type="text" class="form-control" id="color" name="color" value="{{ item.color or '' }}" placeholder="e.g., Black, Blue, Red">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="quantity" class="form-label">Quantity *</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" value="{{ item.quantity }}" min="0" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="min_stock_level" class="form-label">Minimum Stock Level</label>
+                <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" value="{{ item.min_stock_level }}" min="0" required>
+                <div class="form-text">Alert when quantity falls below this number</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ item.description or '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-ssd btn-lg">
+                <i class="fas fa-save"></i> Update Item
+            </button>
+            <a href="{{ url_for('inventory') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
