@@ -1,0 +1,8 @@
+Click "Add file" → "Create new file"
+Filename: requirements.txt
+Paste this content:
+
+Flask==2.3.3
+Flask-Login==0.6.3
+Werkzeug==2.3.7
+gunicorn==21.2.0
