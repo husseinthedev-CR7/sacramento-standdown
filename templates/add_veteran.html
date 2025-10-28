@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Add Veteran - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Add Veteran</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('veterans') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Veterans
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Veteran Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_veteran') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="first_name" class="form-label">First Name *</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="last_name" class="form-label">Last Name *</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="service_branch" class="form-label">Service Branch</label>
+                    <select class="form-select" id="service_branch" name="service_branch">
+                        <option value="">Select Branch</option>
+                        <option value="Army">Army</option>
+                        <option value="Navy">Navy</option>
+                        <option value="Air Force">Air Force</option>
+                        <option value="Marine Corps">Marine Corps</option>
+                        <option value="Space Force">Space Force</option>
+                        <option value="Coast Guard">Coast Guard</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="service_component" class="form-label">Service Component</label>
+                    <select class="form-select" id="service_component" name="service_component">
+                        <option value="">Select Component</option>
+                        <option value="Active Duty">Active Duty</option>
+                        <option value="Reserve">Reserve</option>
+                        <option value="National Guard">National Guard</option>
+                        <option value="Veteran">Veteran</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="phone_number" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="(555) 123-4567">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="veteran@example.com">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="gender" class="form-label">Gender</label>
+                    <select class="form-select" id="gender" name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="full_ssn" class="form-label">SSN</label>
+                    <input type="text" class="form-control" id="full_ssn" name="full_ssn" placeholder="123-45-6789">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="housing_status" class="form-label">Housing Status</label>
+                    <select class="form-select" id="housing_status" name="housing_status">
+                        <option value="">Select Status</option>
+                        <option value="Stably Housed">Stably Housed</option>
+                        <option value="At Risk of Homelessness">At Risk of Homelessness</option>
+                        <option value="Experiencing Homelessness">Experiencing Homelessness</option>
+                        <option value="Transitional Housing">Transitional Housing</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="housing_notes" class="form-label">Housing Notes</label>
+                    <textarea class="form-control" id="housing_notes" name="housing_notes" rows="2" placeholder="Additional housing information..."></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Add Veteran
+                </button>
+                <a href="{{ url_for('veterans') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
