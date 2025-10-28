@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response, session
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
@@ -93,6 +93,22 @@ def init_db():
         )
     ''')
     
+    # Equipment assignments table
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS equipment_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            veteran_id INTEGER NOT NULL,
+            inventory_id INTEGER NOT NULL,
+            quantity_assigned INTEGER NOT NULL,
+            assigned_by INTEGER NOT NULL,
+            assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            notes TEXT,
+            FOREIGN KEY (veteran_id) REFERENCES veterans (id),
+            FOREIGN KEY (inventory_id) REFERENCES inventory (id),
+            FOREIGN KEY (assigned_by) REFERENCES users (id)
+        )
+    ''')
+    
     # Notifications table
     conn.execute('''
         CREATE TABLE IF NOT EXISTS notifications (
@@ -120,12 +136,22 @@ def init_db():
             ('admin', 'admin@standdown.org', password_hash, 'admin', 'Administrator')
         )
     
+    # Create default staff user
+    staff_exists = conn.execute('SELECT * FROM users WHERE username = ?', ('staff',)).fetchone()
+    if not staff_exists:
+        password_hash = generate_password_hash('staff123')
+        conn.execute(
+            'INSERT INTO users (username, email, password_hash, role, display_name) VALUES (?, ?, ?, ?, ?)',
+            ('staff', 'staff@standdown.org', password_hash, 'staff', 'Staff Member')
+        )
+    
     conn.commit()
     conn.close()
 
 # Initialize database
 init_db()
 
+# Routes
 @app.route('/')
 def home():
     if current_user.is_authenticated:
@@ -165,6 +191,7 @@ def dashboard():
     total_inventory = conn.execute('SELECT COUNT(*) FROM inventory').fetchone()[0]
     low_stock = conn.execute('SELECT COUNT(*) FROM inventory WHERE quantity <= min_stock_level').fetchone()[0]
     pending_notifications = conn.execute('SELECT COUNT(*) FROM notifications WHERE status = "pending"').fetchone()[0]
+    total_assignments = conn.execute('SELECT COUNT(*) FROM equipment_assignments').fetchone()[0]
     
     # Get recent notifications
     recent_notifications = conn.execute('''
@@ -174,6 +201,16 @@ def dashboard():
         ORDER BY n.created_at DESC LIMIT 5
     ''').fetchall()
     
+    # Get recent equipment assignments
+    recent_assignments = conn.execute('''
+        SELECT ea.*, v.first_name, v.last_name, i.item_name, u.display_name as assigned_by_name
+        FROM equipment_assignments ea
+        JOIN veterans v ON ea.veteran_id = v.id
+        JOIN inventory i ON ea.inventory_id = i.id
+        JOIN users u ON ea.assigned_by = u.id
+        ORDER BY ea.assigned_at DESC LIMIT 5
+    ''').fetchall()
+    
     conn.close()
     
     return render_template('dashboard.html',
@@ -181,7 +218,9 @@ def dashboard():
                          total_inventory=total_inventory,
                          low_stock=low_stock,
                          pending_notifications=pending_notifications,
-                         recent_notifications=recent_notifications)
+                         total_assignments=total_assignments,
+                         recent_notifications=recent_notifications,
+                         recent_assignments=recent_assignments)
 
 @app.route('/veterans')
 @login_required
@@ -220,6 +259,85 @@ def add_veteran():
     
     return render_template('add_veteran.html')
 
+@app.route('/veteran/<int:veteran_id>')
+@login_required
+def veteran_detail(veteran_id):
+    conn = get_db_connection()
+    
+    # Get veteran details
+    veteran = conn.execute('SELECT * FROM veterans WHERE id = ?', (veteran_id,)).fetchone()
+    
+    # Get equipment assignments for this veteran
+    assignments = conn.execute('''
+        SELECT ea.*, i.item_name, i.category, i.size, i.color, u.display_name as assigned_by_name
+        FROM equipment_assignments ea
+        JOIN inventory i ON ea.inventory_id = i.id
+        JOIN users u ON ea.assigned_by = u.id
+        WHERE ea.veteran_id = ?
+        ORDER BY ea.assigned_at DESC
+    ''', (veteran_id,)).fetchall()
+    
+    # Get available inventory for assignment
+    inventory_items = conn.execute('SELECT * FROM inventory WHERE quantity > 0 ORDER BY item_name').fetchall()
+    
+    conn.close()
+    
+    if not veteran:
+        flash('Veteran not found', 'error')
+        return redirect(url_for('veterans'))
+    
+    return render_template('veteran_detail.html', 
+                         veteran=veteran, 
+                         assignments=assignments, 
+                         inventory_items=inventory_items)
+
+@app.route('/assign_equipment/<int:veteran_id>', methods=['POST'])
+@login_required
+def assign_equipment(veteran_id):
+    inventory_id = request.form.get('inventory_id')
+    quantity = int(request.form.get('quantity', 1))
+    notes = request.form.get('notes', '')
+    
+    conn = get_db_connection()
+    
+    # Check if veteran exists
+    veteran = conn.execute('SELECT * FROM veterans WHERE id = ?', (veteran_id,)).fetchone()
+    if not veteran:
+        flash('Veteran not found', 'error')
+        conn.close()
+        return redirect(url_for('veterans'))
+    
+    # Check if inventory item exists and has sufficient quantity
+    inventory = conn.execute('SELECT * FROM inventory WHERE id = ?', (inventory_id,)).fetchone()
+    if not inventory:
+        flash('Inventory item not found', 'error')
+        conn.close()
+        return redirect(url_for('veteran_detail', veteran_id=veteran_id))
+    
+    if inventory['quantity'] < quantity:
+        flash(f'Not enough {inventory["item_name"]} in stock. Available: {inventory["quantity"]}', 'error')
+        conn.close()
+        return redirect(url_for('veteran_detail', veteran_id=veteran_id))
+    
+    # Assign equipment and update inventory
+    conn.execute(
+        'INSERT INTO equipment_assignments (veteran_id, inventory_id, quantity_assigned, assigned_by, notes) VALUES (?, ?, ?, ?, ?)',
+        (veteran_id, inventory_id, quantity, current_user.id, notes)
+    )
+    
+    # Update inventory quantity
+    new_quantity = inventory['quantity'] - quantity
+    conn.execute(
+        'UPDATE inventory SET quantity = ? WHERE id = ?',
+        (new_quantity, inventory_id)
+    )
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f'Successfully assigned {quantity} {inventory["item_name"]} to {veteran["first_name"]} {veteran["last_name"]}', 'success')
+    return redirect(url_for('veteran_detail', veteran_id=veteran_id))
+
 @app.route('/inventory')
 @login_required
 def inventory():
@@ -252,6 +370,39 @@ def add_inventory():
         return redirect(url_for('inventory'))
     
     return render_template('add_inventory.html')
+
+@app.route('/edit_inventory/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def edit_inventory(item_id):
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        item_name = request.form.get('item_name')
+        category = request.form.get('category')
+        size = request.form.get('size')
+        color = request.form.get('color')
+        quantity = int(request.form.get('quantity', 0))
+        min_stock_level = int(request.form.get('min_stock_level', 5))
+        description = request.form.get('description')
+        
+        conn.execute(
+            'UPDATE inventory SET item_name = ?, category = ?, size = ?, color = ?, quantity = ?, min_stock_level = ?, description = ? WHERE id = ?',
+            (item_name, category, size, color, quantity, min_stock_level, description, item_id)
+        )
+        conn.commit()
+        conn.close()
+        
+        flash('Inventory item updated successfully!', 'success')
+        return redirect(url_for('inventory'))
+    
+    item = conn.execute('SELECT * FROM inventory WHERE id = ?', (item_id,)).fetchone()
+    conn.close()
+    
+    if not item:
+        flash('Inventory item not found', 'error')
+        return redirect(url_for('inventory'))
+    
+    return render_template('edit_inventory.html', item=item)
 
 @app.route('/notifications')
 @login_required
