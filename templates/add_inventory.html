@@ -3,7 +3,7 @@
 {% block title %}Add Inventory - Sacramento Stand Down{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-3 mb-3 border-bottom">
     <h1 class="h2">Add Inventory Item</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">
@@ -12,77 +12,73 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">Item Information</h5>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ url_for('add_inventory') }}">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="item_name" class="form-label">Item Name *</label>
-                    <input type="text" class="form-control" id="item_name" name="item_name" required placeholder="e.g., Winter Jacket, Boots, Backpack">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="category" class="form-label">Category</label>
-                    <select class="form-select" id="category" name="category">
-                        <option value="">Select Category</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Footwear">Footwear</option>
-                        <option value="Hygiene">Hygiene</option>
-                        <option value="Food">Food</option>
-                        <option value="Equipment">Equipment</option>
-                        <option value="Medical">Medical</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
+<div class="content-card">
+    <h5 class="card-title mb-3">New Inventory Item</h5>
+    <form method="POST" action="{{ url_for('add_inventory') }}">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="item_name" class="form-label">Item Name *</label>
+                <input type="text" class="form-control" id="item_name" name="item_name" required placeholder="e.g., Winter Jacket, Boots, Backpack">
             </div>
+            <div class="col-md-6 mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Select Category</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Footwear">Footwear</option>
+                    <option value="Hygiene">Hygiene</option>
+                    <option value="Food">Food</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
 
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="size" class="form-label">Size</label>
-                    <select class="form-select" id="size" name="size">
-                        <option value="">Select Size</option>
-                        <option value="XS">XS</option>
-                        <option value="S">S</option>
-                        <option value="M">M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
-                        <option value="N/A">Not Applicable</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="color" class="form-label">Color</label>
-                    <input type="text" class="form-control" id="color" name="color" placeholder="e.g., Black, Blue, Red">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="quantity" class="form-label">Quantity *</label>
-                    <input type="number" class="form-control" id="quantity" name="quantity" value="0" min="0" required>
-                </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="size" class="form-label">Size</label>
+                <select class="form-select" id="size" name="size">
+                    <option value="">Select Size</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="N/A">Not Applicable</option>
+                </select>
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="color" class="form-label">Color</label>
+                <input type="text" class="form-control" id="color" name="color" placeholder="e.g., Black, Blue, Red">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="quantity" class="form-label">Quantity *</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" value="0" min="0" required>
+            </div>
+        </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="min_stock_level" class="form-label">Minimum Stock Level</label>
-                    <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" value="5" min="0" required>
-                    <div class="form-text">Alert when quantity falls below this number</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3" placeholder="Item description, notes, or specifications..."></textarea>
-                </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="min_stock_level" class="form-label">Minimum Stock Level</label>
+                <input type="number" class="form-control" id="min_stock_level" name="min_stock_level" value="5" min="0" required>
+                <div class="form-text">Alert when quantity falls below this number</div>
             </div>
+            <div class="col-md-6 mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Item description, notes, or specifications..."></textarea>
+            </div>
+        </div>
 
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Add Inventory Item
-                </button>
-                <a href="{{ url_for('inventory') }}" class="btn btn-secondary btn-lg">
-                    <i class="fas fa-times"></i> Cancel
-                </a>
-            </div>
-        </form>
-    </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-ssd btn-lg">
+                <i class="fas fa-save"></i> Add Inventory Item
+            </button>
+            <a href="{{ url_for('inventory') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
 </div>
 {% endblock %}
