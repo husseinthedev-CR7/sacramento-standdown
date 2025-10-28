@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_veterans }}</h4>
+                        <p class="card-text">Total Veterans</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_inventory }}</h4>
+                        <p class="card-text">Inventory Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-boxes fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ low_stock }}</h4>
+                        <p class="card-text">Low Stock Items</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ pending_notifications }}</h4>
+                        <p class="card-text">Pending Notifications</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-bell fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('add_veteran') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus"></i> Add Veteran
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('veterans') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-users"></i> View Veterans
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('add_inventory') }}" class="btn btn-success w-100">
+                            <i class="fas fa-plus-circle"></i> Add Inventory
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('notifications') }}" class="btn btn-info w-100">
+                            <i class="fas fa-bell"></i> Send Notification
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Notifications -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Notifications</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_notifications %}
+                    <div class="list-group">
+                        {% for notification in recent_notifications %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-user"></i> {{ notification.from_user_name }}
+                                    {% if notification.priority == 'Urgent' %}
+                                        <span class="badge bg-danger">Urgent</span>
+                                    {% elif notification.priority == 'Emergency' %}
+                                        <span class="badge bg-dark">Emergency</span>
+                                    {% endif %}
+                                </h6>
+                                <small>{{ notification.created_at[:16] }}</small>
+                            </div>
+                            <p class="mb-1"><strong>Reason:</strong> {{ notification.reason }}</p>
+                            <p class="mb-1"><strong>Location:</strong> {{ notification.location }}</p>
+                            {% if notification.status == 'responded' %}
+                                <small class="text-success"><i class="fas fa-check"></i> Responded: {{ notification.response }}</small>
+                            {% else %}
+                                <small class="text-warning"><i class="fas fa-clock"></i> Pending response</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent notifications</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
