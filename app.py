@@ -209,3 +209,178 @@ def add_veteran():
         
         conn = get_db_connection()
         conn.execute(
+            'INSERT INTO veterans (first_name, last_name, service_branch, phone_number, email, gender, full_ssn, date_of_birth, housing_status, housing_notes, service_component) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (first_name, last_name, service_branch, phone_number, email, gender, full_ssn, date_of_birth, housing_status, housing_notes, service_component)
+        )
+        conn.commit()
+        conn.close()
+        
+        flash('Veteran added successfully!', 'success')
+        return redirect(url_for('veterans'))
+    
+    return render_template('add_veteran.html')
+
+@app.route('/inventory')
+@login_required
+def inventory():
+    conn = get_db_connection()
+    items = conn.execute('SELECT * FROM inventory ORDER BY item_name').fetchall()
+    conn.close()
+    return render_template('inventory.html', items=items)
+
+@app.route('/add_inventory', methods=['GET', 'POST'])
+@login_required
+def add_inventory():
+    if request.method == 'POST':
+        item_name = request.form.get('item_name')
+        category = request.form.get('category')
+        size = request.form.get('size')
+        color = request.form.get('color')
+        quantity = int(request.form.get('quantity', 0))
+        min_stock_level = int(request.form.get('min_stock_level', 5))
+        description = request.form.get('description')
+        
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO inventory (item_name, category, size, color, quantity, min_stock_level, description) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (item_name, category, size, color, quantity, min_stock_level, description)
+        )
+        conn.commit()
+        conn.close()
+        
+        flash('Inventory item added successfully!', 'success')
+        return redirect(url_for('inventory'))
+    
+    return render_template('add_inventory.html')
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    conn = get_db_connection()
+    
+    # Get all users for dropdown
+    users = conn.execute('SELECT id, display_name FROM users WHERE id != ?', (current_user.id,)).fetchall()
+    
+    # Get sent notifications
+    sent_notifications = conn.execute('''
+        SELECT n.*, u.display_name as to_user_name 
+        FROM notifications n 
+        LEFT JOIN users u ON n.to_user_id = u.id 
+        WHERE n.from_user_id = ?
+        ORDER BY n.created_at DESC
+    ''', (current_user.id,)).fetchall()
+    
+    # Get received notifications
+    received_notifications = conn.execute('''
+        SELECT n.*, u.display_name as from_user_name 
+        FROM notifications n 
+        JOIN users u ON n.from_user_id = u.id 
+        WHERE n.to_user_id = ? OR n.to_user_id IS NULL
+        ORDER BY n.created_at DESC
+    ''', (current_user.id,)).fetchall()
+    
+    conn.close()
+    
+    return render_template('notifications.html', 
+                         users=users,
+                         sent_notifications=sent_notifications,
+                         received_notifications=received_notifications)
+
+@app.route('/send_notification', methods=['POST'])
+@login_required
+def send_notification():
+    to_user_id = request.form.get('to_user_id')
+    reason = request.form.get('reason')
+    location = request.form.get('location')
+    priority = request.form.get('priority', 'Normal')
+    custom_reason = request.form.get('custom_reason', '')
+    custom_location = request.form.get('custom_location', '')
+    
+    # Use custom fields if provided
+    final_reason = custom_reason if reason == 'Other' else reason
+    final_location = custom_location if location == 'Other' else location
+    
+    conn = get_db_connection()
+    conn.execute(
+        'INSERT INTO notifications (from_user_id, to_user_id, message_type, reason, location, priority) VALUES (?, ?, ?, ?, ?, ?)',
+        (current_user.id, to_user_id if to_user_id else None, 'help_request', final_reason, final_location, priority)
+    )
+    conn.commit()
+    conn.close()
+    
+    flash('Notification sent successfully!', 'success')
+    return redirect(url_for('notifications'))
+
+@app.route('/respond_notification/<int:notification_id>', methods=['POST'])
+@login_required
+def respond_notification(notification_id):
+    response = request.form.get('response')
+    
+    conn = get_db_connection()
+    conn.execute(
+        'UPDATE notifications SET status = "responded", response = ? WHERE id = ?',
+        (response, notification_id)
+    )
+    conn.commit()
+    conn.close()
+    
+    flash('Response sent!', 'success')
+    return redirect(url_for('notifications'))
+
+@app.route('/users')
+@login_required
+def users():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin only.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    conn = get_db_connection()
+    users = conn.execute('SELECT * FROM users ORDER BY role, display_name').fetchall()
+    conn.close()
+    return render_template('users.html', users=users)
+
+@app.route('/add_user', methods=['GET', 'POST'])
+@login_required
+def add_user():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin only.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role')
+        display_name = request.form.get('display_name')
+        
+        conn = get_db_connection()
+        
+        # Check if username exists
+        existing_user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        if existing_user:
+            flash('Username already exists', 'error')
+            conn.close()
+            return render_template('add_user.html')
+        
+        password_hash = generate_password_hash(password)
+        
+        conn.execute(
+            'INSERT INTO users (username, email, password_hash, role, display_name) VALUES (?, ?, ?, ?, ?)',
+            (username, email, password_hash, role, display_name)
+        )
+        conn.commit()
+        conn.close()
+        
+        flash('User added successfully!', 'success')
+        return redirect(url_for('users'))
+    
+    return render_template('add_user.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
