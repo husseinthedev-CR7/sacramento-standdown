@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Sacramento Stand Down{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Notifications</h1>
+</div>
+
+<!-- Send Notification Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Send Help Request</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('send_notification') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="to_user_id" class="form-label">Send To (Optional)</label>
+                    <select class="form-select" id="to_user_id" name="to_user_id">
+                        <option value="">All Staff (Broadcast)</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.display_name }} ({{ user.role }})</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Leave blank to send to all staff members</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="priority" class="form-label">Priority Level</label>
+                    <select class="form-select" id="priority" name="priority">
+                        <option value="Normal">Normal</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="Emergency">Emergency</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="reason" class="form-label">Reason for Help *</label>
+                    <select class="form-select" id="reason" name="reason" required>
+                        <option value="">Select Reason</option>
+                        <option value="Veteran assistance needed">Veteran assistance needed</option>
+                        <option value="Equipment issue">Equipment issue</option>
+                        <option value="Inventory restock needed">Inventory restock needed</option>
+                        <option value="Technical problem">Technical problem</option>
+                        <option value="Security assistance">Security assistance</option>
+                        <option value="Medical emergency">Medical emergency</option>
+                        <option value="Other">Other (specify below)</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="location" class="form-label">Location *</label>
+                    <select class="form-select" id="location" name="location" required>
+                        <option value="">Select Location</option>
+                        <option value="Registration Desk">Registration Desk</option>
+                        <option value="Inventory Room">Inventory Room</option>
+                        <option value="Medical Area">Medical Area</option>
+                        <option value="Cafeteria">Cafeteria</option>
+                        <option value="Parking Lot">Parking Lot</option>
+                        <option value="Admin Office">Admin Office</option>
+                        <option value="Other">Other (specify below)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" id="customFields" style="display: none;">
+                <div class="col-md-6 mb-3">
+                    <label for="custom_reason" class="form-label">Custom Reason</label>
+                    <input type="text" class="form-control" id="custom_reason" name="custom_reason" placeholder="Describe the reason for help...">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="custom_location" class="form-label">Custom Location</label>
+                    <input type="text" class="form-control" id="custom_location" name="custom_location" placeholder="Specify the location...">
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-paper-plane"></i> Send Help Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Received Notifications -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Received Help Requests</h5>
+    </div>
+    <div class="card-body">
+        {% if received_notifications %}
+            <div class="list-group">
+                {% for notification in received_notifications %}
+                <div class="list-group-item {% if notification.priority == 'Emergency' %}list-group-item-danger{% elif notification.priority == 'Urgent' %}list-group-item-warning{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">
+                            <i class="fas fa-user"></i> {{ notification.from_user_name }}
+                            {% if notification.priority == 'Urgent' %}
+                                <span class="badge bg-warning">Urgent</span>
+                            {% elif notification.priority == 'Emergency' %}
+                                <span class="badge bg-danger">Emergency</span>
+                            {% endif %}
+                        </h6>
+                        <small>{{ notification.created_at[:16] }}</small>
+                    </div>
+                    <p class="mb-1"><strong>Reason:</strong> {{ notification.reason }}</p>
+                    <p class="mb-1"><strong>Location:</strong> {{ notification.location }}</p>
+                    
+                    {% if notification.status == 'responded' %}
+                        <small class="text-success"><i class="fas fa-check"></i> You responded: {{ notification.response }}</small>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('respond_notification', notification_id=notification.id) }}" class="mt-2">
+                            <div class="btn-group btn-group-sm">
+                                <button type="submit" name="response" value="On my way" class="btn btn-success">
+                                    <i class="fas fa-walking"></i> On my way
+                                </button>
+                                <button type="submit" name="response" value="Can't help right now" class="btn btn-secondary">
+                                    <i class="fas fa-clock"></i> Can't help now
+                                </button>
+                                <button type="submit" name="response" value="Send someone else" class="btn btn-info">
+                                    <i class="fas fa-user-friends"></i> Send someone
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No received notifications</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sent Notifications -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Sent Help Requests</h5>
+    </div>
+    <div class="card-body">
+        {% if sent_notifications %}
+            <div class="list-group">
+                {% for notification in sent_notifications %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">
+                            To: {% if notification.to_user_name %}{{ notification.to_user_name }}{% else %}All Staff{% endif %}
+                            {% if notification.priority == 'Urgent' %}
+                                <span class="badge bg-warning">Urgent</span>
+                            {% elif notification.priority == 'Emergency' %}
+                                <span class="badge bg-danger">Emergency</span>
+                            {% endif %}
+                        </h6>
+                        <small>{{ notification.created_at[:16] }}</small>
+                    </div>
+                    <p class="mb-1"><strong>Reason:</strong> {{ notification.reason }}</p>
+                    <p class="mb-1"><strong>Location:</strong> {{ notification.location }}</p>
+                    <small class="{% if notification.status == 'responded' %}text-success{% else %}text-warning{% endif %}">
+                        <i class="fas fa-{% if notification.status == 'responded' %}check{% else %}clock{% endif %}"></i> 
+                        {{ notification.status|title }}{% if notification.response %}: {{ notification.response }}{% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No sent notifications</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reasonSelect = document.getElementById('reason');
+    const locationSelect = document.getElementById('location');
+    const customFields = document.getElementById('customFields');
+    
+    function toggleCustomFields() {
+        if (reasonSelect.value === 'Other' || locationSelect.value === 'Other') {
+            customFields.style.display = 'block';
+        } else {
+            customFields.style.display = 'none';
+        }
+    }
+    
+    reasonSelect.addEventListener('change', toggleCustomFields);
+    locationSelect.addEventListener('change', toggleCustomFields);
+});
+</script>
+{% endblock %}
