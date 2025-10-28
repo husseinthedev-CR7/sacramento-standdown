@@ -1,0 +1,12 @@
+Filename: render.yaml
+Paste this content:
+
+services:
+  - type: web
+    name: sacramento-standdown
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
